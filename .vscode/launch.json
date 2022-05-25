@@ -5,11 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "pwa-chrome",
+           
+            "name": "MFA",
             "request": "launch",
-            "name": "Launch Chrome against localhost",
-            "url": "http://localhost:3000",
-            "webRoot": "${workspaceFolder}"
+            "type": "dart",
+            "args": [
+                "--web-port=8080",
+                "--web-hostname=127.0.0.1",
+                "--no-sound-null-safety",
+                "-d",
+                "chrome"
+            ]
         }
     ]
 }

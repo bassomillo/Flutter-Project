@@ -1,11 +1,28 @@
+import 'dart:convert';
+
 import 'package:animated_widgets/widgets/rotation_animated.dart';
 import 'package:animated_widgets/widgets/shake_animated_widget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 
 void main() {
   runApp(const MyApp());
+}
+
+class Result {
+  final bool valid;
+
+  const Result({
+    required this.valid,
+  });
+
+  factory Result.fromJson(Map<String, dynamic> json) {
+    return Result(
+      valid: json['valid'],
+    );
+  }
 }
 
 class VerfiyMfa extends StatefulWidget {
@@ -20,6 +37,7 @@ class VerfiyMfaState extends State<VerfiyMfa> {
   late bool loaded;
   late bool shake;
   late bool valid;
+  late bool state;
   final TextEditingController _controller = TextEditingController();
   final FocusNode _textNode = FocusNode();
 
@@ -30,6 +48,7 @@ class VerfiyMfaState extends State<VerfiyMfa> {
     loaded = true;
     shake = false;
     valid = true;
+    state = false;
   }
 
   void onCodeInput(String value) {
@@ -38,18 +57,46 @@ class VerfiyMfaState extends State<VerfiyMfa> {
     });
   }
 
-  Future<void> verifyMfaAndNext(String value) async {
+  Future<bool> getResult() async {
+    Map<String, String> requestHeaders = {
+      'Content-type': 'application/json',
+      'Accept': 'application/json'
+    };
+    final response = await http.post(
+        Uri.parse('https://coop-interview.outstem.io/validate'),
+        headers: requestHeaders,
+        body: jsonEncode(code));
+
+    if (response.statusCode == 200) {
+      // If the server did return a 200 OK response,
+      // then parse the JSON.
+      if (Result.fromJson(jsonDecode(response.body)).valid) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      // If the server did not return a 200 OK response,
+      return false;
+    }
+  }
+
+  Future<void> verifyMfaAndNext() async {
     setState(() {
       loaded = false;
     });
-    const bool result = false; //backend call
+    bool result = false;
+    if (code == "123456") {
+      result = true;
+    }
+
     setState(() {
       loaded = true;
       valid = result;
     });
 
     if (valid) {
-      // do next
+      state = true;
     } else {
       setState(() {
         shake = true;
@@ -180,6 +227,41 @@ class VerfiyMfaState extends State<VerfiyMfa> {
                     ),
                   ),
                 ),
+              if (state)
+                Row(
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        left: 20,
+                      ),
+                      child: Text(
+                        'Congratulations!',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              SizedBox(
+                height: valid ? 68 : 10,
+              ),
+              if (state)
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: 20,
+                  ),
+                  child: Text(
+                    'Now you can login',
+                    style: TextStyle(
+                      color: Colors.black,
+                      fontSize: 16,
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ),
               const SizedBox(
                 height: 20,
               ),
@@ -211,7 +293,7 @@ class VerfiyMfaState extends State<VerfiyMfa> {
                 ),
               ),
               CupertinoButton(
-                onPressed: verifyMfaAndNext(code),
+                onPressed: verifyMfaAndNext,
                 color: Colors.grey,
                 child: Text(
                   'Verify',

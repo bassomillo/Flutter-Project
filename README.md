@@ -1,6 +1,8 @@
 # Flutter-Project
 This is a MFA website written in Flutter. 
 
+The deployment link is https://bassomillo.github.io/
+
 How to run it?
 
 -download Flutter from https://docs.flutter.dev/get-started/install
